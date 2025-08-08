@@ -1,0 +1,18 @@
+# base kết nối tới VPS aws
+ ssh -i "astrolingo.pem" ubuntu@ec2-18-140-5-206.ap-southeast-1.compute.amazonaws.com
+
+# base trong linuxx
+rsync -avz --exclude 'node_modules' --exclude '.git' --exclude '.env' \
+-e "ssh -i ~/.ssh/your-key.pem" \
+. ubuntu@ip-address:~/app
+
+# ------
+thứ cần thay đổi (dựa vào base kết nối tới VPS)
+- your-key.pem: astrolingo.pem
+- ip-address: ec2-13-215-189-134.ap-southeast-1.compute.amazonaws.com
+
+# chạy trong ubuntu với địa chỉ của windows "D:\Homework\Year3\UngDungDiDong_NT118.P22\DoAn\VPSaws\astrolingo.pem"
+rsync -avz  --delete \
+--exclude 'node_modules' --exclude '.git' --exclude '.env' \
+-e "ssh -i ~/.ssh/astrolingo.pem" \
+. ubuntu@ec2-13-215-189-134.ap-southeast-1.compute.amazonaws.com:~/astrolingoapi
