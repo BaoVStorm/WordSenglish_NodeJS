@@ -27,7 +27,6 @@ app.use(cors());
 
 app.use("/api/auth", require("./routes/users"));
 
-
 // Chạy server
 app.listen(PORT, 
     console.log(`Server running on port: ${PORT}`.blue.underline.bold)

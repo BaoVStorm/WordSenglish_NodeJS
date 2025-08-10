@@ -1,39 +1,19 @@
 const jwt = require('jsonwebtoken');
 
 module.exports = async function (req, res, next) {
-    const token = req.header('Authorization');
+    const authHeader = req.headers['authorization']; // Format: "Bearer TOKEN"
+    const token = authHeader && authHeader.split(' ')[1];
 
-    if(!token) {
-        return res.status(401).json({
-            msg: 'No token, authorization denied'
-        });
+    if (!token) {
+        return res.status(401).json({ success: false, msg: 'Access token missing' });
     }
-    try {
-        // Nếu token có dạng "Bearer <token>", thì cần tách chuỗi:
-        const pureToken = token.startsWith('Bearer ') ? token.slice(7).trim() : token;
 
-        // verify JWT: kiểm tra tính hợp lệ 
-        // process.env.jwtUserSecret là chuỗi bí mật mã hoá
-        jwt.verify(pureToken, process.env.jwtUserSecret, (err, decoded) => {
-            if(err) {
-                res.status(401).json({
-                    msg: 'Token not valid'
-                });
-            } else {
-                req.user = decoded.user;
-                next();
-            }
-        })
+    jwt.verify(token, process.env.jwtUserSecret, (err, decoded) => {
+        if (err) {
+        return res.status(403).json({ success: false, msg: 'Invalid or expired token' });
+        }
 
-        // return res.status(200).json({
-        //     msg: 'Server error',
-        //     user: req.user
-        // });
-
-    } catch(err) {
-        console.log('Middleware error: ' + err);
-        res.status(500).json({
-            msg: 'Server error'
-        });
-    }
+        req.user = decoded; // Now req.user has { userId, type, ... }
+        next();
+    });
 }
