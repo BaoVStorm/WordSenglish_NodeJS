@@ -15,6 +15,7 @@ router.post('/login', userController.login);
 router.post('/logout', user_jwt, userController.logout);
 
 // ----------- function
+router.get('/profile', user_jwt, userController.profile);
 
 
 module.exports = router;

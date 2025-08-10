@@ -3,15 +3,16 @@ const Users = require('../models/Users');
 const bcryptjs = require('bcryptjs');
 const { createToken } = require('../util/CreateToken');
 
+
 // Đăng ký
 exports.register = async (req, res, next) => {  
-  let {user_name, password} = req.body;
+  let {username, password} = req.body;
 
-  user_name = user_name.trim();
+  username = username.trim();
   password = password.trim();
 
   try{
-    let user_exist = await Users.findOne({user_name: user_name});
+    let user_exist = await Users.findOne({user_name: username});
     if(user_exist) {
       return res.status(400).json({
           success: false,
@@ -24,14 +25,14 @@ exports.register = async (req, res, next) => {
     const password_hash = await bcryptjs.hash(password, salt);
 
     let user = new Users({
-      user_name,
+      user_name: username,
       password_hash
     });
 
     await user.save();
 
     const payload = {
-      userId: user.id
+       user: { id: user.id }
     }    
     
     // tạo access token
@@ -101,13 +102,20 @@ exports.refreshToken = async (req, res) => {
 
 // Login
 exports.login = async (req, res) => {  
-  let {user_name, password} = req.body;
+  let {username, password} = req.body;
 
-  user_name = user_name.trim();
+  if(!username || !password)
+    return res.status(403).json({
+      success: false,
+      error_server: false,
+      msg: 'username or password must not empty'
+    });
+
+  username = username.trim();
   password = password.trim();
 
   try {
-    let user = await Users.findOne({user_name: user_name});
+    let user = await Users.findOne({user_name: username});
 
     if(!user) {
       return res.status(400).json({
@@ -128,7 +136,7 @@ exports.login = async (req, res) => {
     }
 
     const payload = {
-      userId: user.id
+       user: { id: user.id }
     }    
 
     // tạo access token
@@ -194,9 +202,9 @@ exports.logout = async (req, res) => {
 // ----- query
 
 // Get Current User
-exports.getCurrentUser = async (req, res, next) => {
+exports.profile = async (req, res) => {
     try {
-        const user = await Users.findById(req.user.id).select('-password_hash');
+        const user = await Users.findById(req.user.id);
 
         // Nếu không tìm thấy người dùng
         if (!user) {
@@ -206,18 +214,9 @@ exports.getCurrentUser = async (req, res, next) => {
           });
         } 
 
-        // check verify account
-        if(!user.verified) {
-          return res.status(400).json({
-            success: false,
-            msg: "Email hasn't been verified yet."
-          });
-        }
-
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
-            user_id: user.id,
-            user: user
+            msg: 'Fetch Successfully.'
         });
   
     } catch(err) {
@@ -227,6 +226,5 @@ exports.getCurrentUser = async (req, res, next) => {
             success: false,
             msg: 'Server Error'
         });
-        next();
     }
 };
