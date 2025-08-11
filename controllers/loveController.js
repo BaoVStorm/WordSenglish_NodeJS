@@ -1,4 +1,3 @@
-// controllers/loveController.js
 import mongoose from 'mongoose';
 import Love from '../models/Love.js';
 import Post from '../models/Posts.js';
