@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import VocabItem from '../models/VocabItem.js';
 import Post from '../models/Posts.js';
+import Love from '../models/Love.js';
 
 export const getVocabItemsByPost = async (req, res) => {
     try {
@@ -22,14 +23,20 @@ export const getVocabItemsByPost = async (req, res) => {
             return res.status(404).json({ msg: 'Post not found' });
         }
 
-        // Fix: If author_id is null, set default username
+        // Convert to plain object
         const postData = post.toObject();
+
+        // Add username fallback
         postData.username = postData.author_id?.user_name || 'ADMIN';
 
-        // 4. Get vocab items for that post
+        // 4. Add love count
+        const loveCount = await Love.countDocuments({ post_id, islove: true });
+        postData.love = loveCount;
+
+        // 5. Get vocab items for that post
         const vocabItems = await VocabItem.find({ post_id }).sort({ word_en: 1 });
 
-        // 5. Send combined response
+        // 6. Send combined response
         res.json({
             post: postData,
             vocabItems
