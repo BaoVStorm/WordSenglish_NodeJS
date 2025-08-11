@@ -6,6 +6,7 @@ import Love from '../models/Love.js';
 export const getVocabItemsByPost = async (req, res) => {
     try {
         const { post_id } = req.query;
+        const userId = req.user?.id; // from auth middleware
 
         // 1. Check if post_id is provided
         if (!post_id) {
@@ -29,14 +30,22 @@ export const getVocabItemsByPost = async (req, res) => {
         // Add username fallback
         postData.username = postData.author_id?.user_name || 'ADMIN';
 
-        // 4. Add love count
+        // 4. Count total loves
         const loveCount = await Love.countDocuments({ post_id, islove: true });
-        postData.love = loveCount;
+        postData.loveCount = loveCount;
 
-        // 5. Get vocab items for that post
+        // 5. Check if current user loves this post
+        let userLove = false;
+        if (userId) {
+            const loveDoc = await Love.findOne({ post_id, user_id: userId, islove: true });
+            userLove = !!loveDoc;
+        }
+        postData.love = userLove;
+
+        // 6. Get vocab items for that post
         const vocabItems = await VocabItem.find({ post_id }).sort({ word_en: 1 });
 
-        // 6. Send combined response
+        // 7. Send combined response
         res.json({
             post: postData,
             vocabItems
