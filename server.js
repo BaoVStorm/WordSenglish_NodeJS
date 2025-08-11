@@ -28,6 +28,7 @@ app.use(cors());
 app.use("/api/auth", require("./routes/users"));
 app.use("/api/post", require("./routes/posts"));
 app.use("/api/vocabItem", require("./routes/vocabItem"));
+app.use("/api/love", require("./routes/love"));
 
 // Chạy server
 app.listen(PORT, 
