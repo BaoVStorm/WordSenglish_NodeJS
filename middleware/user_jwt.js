@@ -6,14 +6,13 @@ module.exports = async function (req, res, next) {
 
         console.log(authHeader);      
 
-
     if (!token) {
         return res.status(401).json({ success: false, msg: 'Access token missing' });
     }
 
     jwt.verify(token, process.env.jwtUserSecret, (err, decoded) => {
         if (err) {
-            return res.status(403).json({ success: false, msg: 'Invalid or expired token' });
+            return res.status(401).json({ success: false, msg: 'Invalid or expired token' });
         }
 
         req.user = decoded.user; // Now req.user has { userId, type, ... }

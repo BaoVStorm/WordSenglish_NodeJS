@@ -3,6 +3,42 @@ const Users = require('../models/Users');
 const bcryptjs = require('bcryptjs');
 const { createToken } = require('../util/CreateToken');
 
+// refresh Token 
+exports.refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({error: "Refresh token is required"});
+    }
+
+    // Check if refresh token exists in DB
+    const user = await Users.findOne({ refreshToken });
+    if (!user) {
+      return res.status(401).json({error: "Invalid refresh token"});
+    }
+
+    // Verify refresh token
+    jwt.verify(refreshToken, process.env.jwtUserSecret, (err, decoded) => {
+      if (err) {
+        return res.status(403).json({error: "Refresh token expired or invalid"});
+      }
+
+      // Create new access token
+      const payload = { user: { id: user.id } };
+      const newAccessToken = createToken({...payload, type: 'access'}, "15m");
+
+      res.status(200).json({
+        success: true,
+        accessToken: newAccessToken
+      });
+    });
+
+    throw error;
+  } catch (err) {
+    res.status(500).json({err: "server error"});
+  }
+};
 
 // Đăng ký
 exports.register = async (req, res, next) => {  
@@ -60,43 +96,6 @@ exports.register = async (req, res, next) => {
       success: false,
       msg: 'error'
     });
-  }
-};
-
-// refresh Token 
-exports.refreshToken = async (req, res) => {
-  try {
-    const { refreshToken } = req.body;
-
-    if (!refreshToken) {
-      return res.status(400).json({error: "Refresh token is required"});
-    }
-
-    // Check if refresh token exists in DB
-    const user = await Users.findOne({ refreshToken });
-    if (!user) {
-      return res.status(401).json({error: "Invalid refresh token"});
-    }
-
-    // Verify refresh token
-    jwt.verify(refreshToken, process.env.jwtUserSecret, (err, decoded) => {
-      if (err) {
-        return res.status(403).json({error: "Refresh token expired or invalid"});
-      }
-
-      // Create new access token
-      const payload = { user: { id: user.id } };
-      const newAccessToken = createToken({...payload, type: 'access'}, "15m");
-
-      res.status(200).json({
-        success: true,
-        accessToken: newAccessToken
-      });
-    });
-
-    throw error;
-  } catch (err) {
-    res.status(500).json({err: "server error"});
   }
 };
 
@@ -172,7 +171,7 @@ exports.login = async (req, res) => {
 
 exports.logout = async (req, res) => {
   try {
-      const userId = req.user.userId; // Comes from middleware
+      const userId = req.user.id; // Comes from middleware
 
       const user = await Users.findById(userId);
       if (!user) {
@@ -216,6 +215,7 @@ exports.profile = async (req, res) => {
 
         return res.status(200).json({
             success: true,
+            username: user.user_name,
             msg: 'Fetch Successfully.'
         });
   

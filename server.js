@@ -26,6 +26,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 app.use("/api/auth", require("./routes/users"));
+app.use("/api/post", require("./routes/posts"));
 
 // Chạy server
 app.listen(PORT, 
