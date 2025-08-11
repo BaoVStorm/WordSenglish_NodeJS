@@ -21,13 +21,29 @@ export const getCommentsByPost = async (req, res) => {
         res.status(500).json({ msg: 'Server error' });
     }
 };
+
 export const addComment = async (req, res) => {
     try {
         const { post_id, content } = req.body;
         const user_id = req.user.id;
-        const newComment = await Comment.create({ post_id, user_id, content });
-        res.json(newComment);
+
+        // 1. Create comment
+        let newComment = await Comment.create({ post_id, user_id, content });
+
+        // 2. Populate user data
+        newComment = await newComment.populate('user_id', 'user_name avatar');
+
+        // 3. Format the response
+        const formattedComment = {
+            _id: newComment._id,
+            user: newComment.user_id,
+            content: newComment.content,
+            created_at: newComment.created_at,
+        };
+
+        res.json(formattedComment);
     } catch (err) {
+        console.error('Error adding comment:', err);
         res.status(500).json({ msg: 'Server error' });
     }
 };
