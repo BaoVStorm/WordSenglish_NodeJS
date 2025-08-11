@@ -4,7 +4,7 @@ module.exports = async function (req, res, next) {
     const authHeader = req.headers['authorization']; // Format: "Bearer TOKEN"
     const token = authHeader && authHeader.split(' ')[1];
 
-        console.log(authHeader);      
+    // console.log(authHeader);      
 
     if (!token) {
         return res.status(401).json({ success: false, msg: 'Access token missing' });
