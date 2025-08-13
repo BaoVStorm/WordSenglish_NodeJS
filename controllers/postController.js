@@ -151,10 +151,47 @@ export const getPosts = async (req, res) => {
 export const getUserVocabulary = async (req, res) => {
     try {
         const userId = req.user.id; // from auth middleware
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = 12;
+        const skip = (page - 1) * limit;
 
-        const vocabList = await Post.find({ author_id: userId }).sort({ createdAt: -1 });
+        const total = await Post.find({author_id: userId}).countDocuments();
 
-        res.status(200).json(vocabList);
+        let posts = await Post.find({author_id: userId})
+            .populate('author_id', 'user_name')
+            .sort({ created_at: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean();
+
+        const postIds = posts.map(p => p._id);
+
+        // Fetch loves for current user only
+        const loves = await Love.find({
+            post_id: { $in: postIds },
+            user_id: userId,
+            islove: true
+        }).lean();
+
+        // Turn into lookup { postId: true }
+        const loveMap = loves.reduce((acc, l) => {
+            acc[l.post_id.toString()] = true;
+            return acc;
+        }, {});
+
+        // Merge username fallback + love boolean
+        posts = posts.map(post => ({
+            ...post,
+            username: post.author_id?.user_name || 'ADMIN',
+            love: !!loveMap[post._id.toString()] // true if user liked it
+        }));
+
+        res.status(200).json({
+            page,
+            totalPages: Math.ceil(total / limit),
+            totalPosts: total,
+            posts
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error', error: err.message });
