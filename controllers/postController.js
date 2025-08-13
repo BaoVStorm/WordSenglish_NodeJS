@@ -28,6 +28,49 @@ export const createPostWithVocabs = async (req, res) => {
     }
 };
 
+export const editPostWithVocabs = async (req, res) => {
+    try {
+        const { post_id } = req.params;
+        const { title, description, vocab_items } = req.body;
+        const userId = req.user.id;
+
+        // Check if the post exists and belongs to the current user
+        const post = await Post.findOne({ _id: post_id, author_id: userId });
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found or unauthorized' });
+        }
+
+        // Update post details
+        post.title = title;
+        post.description = description;
+        await post.save();
+
+        // Update vocabulary items
+        if (Array.isArray(vocab_items)) {
+            // First delete existing vocab items of this post
+            await VocabItem.deleteMany({ post_id });
+
+            // Then insert the new list
+            const vocabsToInsert = vocab_items.map(v => ({
+                ...v,
+                post_id
+            }));
+            if (vocabsToInsert.length > 0) {
+                await VocabItem.insertMany(vocabsToInsert);
+            }
+        }
+
+        res.status(200).json({
+            message: 'Post and vocab items updated successfully',
+            post_id
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+};
+
 export const deletePost = async (req, res) => {
     try {
         const { post_id } = req.body;
