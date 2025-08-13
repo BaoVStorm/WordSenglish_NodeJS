@@ -216,6 +216,7 @@ exports.profile = async (req, res) => {
         return res.status(200).json({
             success: true,
             username: user.user_name,
+            userId: user._id,
             msg: 'Fetch Successfully.'
         });
   

@@ -5,8 +5,10 @@ const postController = require('../controllers/postController');
 
 // đăng ký tài khoản
 router.post('/create', user_jwt, postController.createPostWithVocabs);
+router.delete('/delete', user_jwt, postController.deletePost);
 
 // Lấy danh sách các póts
 router.get('/posts', user_jwt, postController.getPosts);
+router.get('/userPosts', user_jwt, postController.getUserVocabulary);
 
 module.exports = router;

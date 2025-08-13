@@ -28,6 +28,33 @@ export const createPostWithVocabs = async (req, res) => {
     }
 };
 
+export const deletePost = async (req, res) => {
+    try {
+        const { post_id } = req.body;
+        const userId = req.user.id; // from auth middleware
+        const userRole = req.user.role; // if you store role in token/middleware
+
+        // 1. Find the post
+        const post = await Post.findById(post_id);
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+        // 2. Check if the user is allowed to delete
+        if (post.author_id.toString() !== userId && userRole !== 'admin') {
+            return res.status(403).json({ message: 'Not authorized to delete this post' });
+        }
+
+        // 3. Delete the post
+        await Post.findByIdAndDelete(post_id);
+
+        res.status(200).json({ message: 'Post deleted successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+};
+
 export const getPosts = async (req, res) => {
     try {
         const userId = req.user.id; // from auth middleware
@@ -72,6 +99,19 @@ export const getPosts = async (req, res) => {
             totalPosts: total,
             posts
         });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+};
+
+export const getUserVocabulary = async (req, res) => {
+    try {
+        const userId = req.user.id; // from auth middleware
+
+        const vocabList = await Post.find({ author_id: userId }).sort({ createdAt: -1 });
+
+        res.status(200).json(vocabList);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error', error: err.message });
